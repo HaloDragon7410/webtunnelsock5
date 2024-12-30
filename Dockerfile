@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:stable
 
 RUN apt update && apt upgrade -y && apt install python -y
 
