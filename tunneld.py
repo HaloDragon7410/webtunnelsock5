@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer 
+from http.server import BaseHTTPRequestHandler,HTTPServer 
 import socket, select
 import cgi
 import argparse
@@ -35,23 +35,23 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             if len(to_reads) > 0: 
                 to_read_socket = to_reads[0]
                 try:
-                    print "Getting data from target address" 
+                    print("Getting data from target address") 
                     data = to_read_socket.recv(self.BUFFER)
-                    print data
+                    print(data)
                     self.send_response(200)
                     self.end_headers()
                     if data:
                         self.wfile.write(data)
                 except socket.error as ex:
-                    print 'Error getting data from target socket: %s' % ex  
+                    print('Error getting data from target socket: %s' % ex)  
                     self.send_response(503)
                     self.end_headers()
             else: 
-                print 'No content available from socket'
+                print('No content available from socket')
                 self.send_response(204) # no content had be retrieved
                 self.end_headers()
         else:
-            print 'Connection With ID %s has not been established' % self._get_connection_id()
+            print('Connection With ID %s has not been established' % self._get_connection_id())
             self.send_response(400)
             self.end_headers()
 
@@ -59,14 +59,14 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         """POST: Create TCP Connection to the TargetAddress"""
         id = self._get_connection_id() 
-        print 'Initializing connection with ID %s' % id
+        print('Initializing connection with ID %s' % id)
         length = int(self.headers.getheader('content-length'))
         req_data = self.rfile.read(length)
         params = cgi.parse_qs(req_data, keep_blank_values=1) 
         target_host = params['host'][0]
         target_port = int(params['port'][0])
 
-        print 'Connecting to target address: %s % s' % (target_host, target_port)
+        print('Connecting to target address: %s % s' % (target_host, target_port))
         # open socket connection to remote server
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # use non-blocking socket
@@ -78,15 +78,15 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         try: 
             self.send_response(200)
             self.end_headers()
-        except socket.error, e:
-            print e
+        except socket.error as e:
+            print(e)
 
     def do_PUT(self):
         """Read data from HTTP Request and send to TargetAddress"""
         id = self._get_connection_id()
         s = self.sockets[id]
         if not s:
-            print "Connection with id %s doesn't exist" % id
+            print("Connection with id %s doesn't exist" % id)
             self.send_response(400)
             self.end_headers()
             return
@@ -96,16 +96,16 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         # check if the socket is ready to write
         to_reads, to_writes, in_errors = select.select([], [s], [], 5)
         if len(to_writes) > 0: 
-            print 'Sending data .... %s' % data
+            print('Sending data .... %s' % data)
             to_write_socket = to_writes[0]
             try: 
                 to_write_socket.sendall(data)
                 self.send_response(200)
             except socket.error as ex:
-                print 'Error sending data from target socket: %s' % ex  
+                print('Error sending data from target socket: %s' % ex)  
                 self.send_response(503)
         else:
-            print 'Socket is not ready to write'
+            print('Socket is not ready to write')
             self.send_response(504)
         self.end_headers()
 
