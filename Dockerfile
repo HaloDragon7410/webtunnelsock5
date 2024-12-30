@@ -1,4 +1,4 @@
-FROM ubuntu:stable
+FROM ubuntu:latest
 
 RUN apt update && apt upgrade -y && apt install python -y
 
